@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Android Build Server Tester</title>
+<style>
+    body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
+    input, button { margin: 8px 0; width: 100%; padding: 8px; }
+</style>
+</head>
+<body>
+<h2>Android Build Server Tester</h2>
+
+<h3>1. 更新配置</h3>
+<input id="appName" placeholder="App Name">
+<input id="packageName" placeholder="Package Name (applicationId)">
+<input id="versionCode" placeholder="Version Code">
+<input id="versionName" placeholder="Version Name">
+<input id="adjustToken" placeholder="Adjust App Token">
+
+<button onclick="updateConfig()">Update Config</button>
+
+<hr>
+
+<h3>2. 上传 icon</h3>
+<input type="file" id="iconFile">
+<button onclick="uploadIcon()">Upload Icon</button>
+
+<h3>3. 上传 google-services.json</h3>
+<input type="file" id="googleFile">
+<button onclick="uploadGoogle()">Upload Google Services</button>
+
+<hr>
+
+<h3>4. Build APK</h3>
+<button onclick="buildApk()">Start Build</button>
+
+<script>
+function updateConfig() {
+    fetch('/config/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            appName: document.getElementById('appName').value,
+            packageName: document.getElementById('packageName').value,
+            versionCode: document.getElementById('versionCode').value,
+            versionName: document.getElementById('versionName').value,
+            adjustToken: document.getElementById('adjustToken').value
+        })
+    }).then(r => r.text()).then(alert);
+}
+
+function uploadIcon() {
+    const form = new FormData();
+    form.append('icon', document.getElementById('iconFile').files[0]);
+    fetch('/upload/icon', { method: 'POST', body: form })
+        .then(r => r.text()).then(alert);
+}
+
+function uploadGoogle() {
+    const form = new FormData();
+    form.append('google', document.getElementById('googleFile').files[0]);
+    fetch('/upload/google', { method: 'POST', body: form })
+        .then(r => r.text()).then(alert);
+}
+
+function buildApk() {
+    fetch('/build', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => alert('Build started or result: ' + JSON.stringify(data)));
+}
+</script>
+</body>
+</html>
