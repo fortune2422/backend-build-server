@@ -6,6 +6,7 @@ const app = express();
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.json());
+app.use(express.static('public'));
 
 app.get("/", (req, res) => {
     res.send("Android Build Server is running!");
