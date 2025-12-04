@@ -1,23 +1,50 @@
-const express = require("express");
-const multer = require("multer");
-const fs = require("fs-extra");
-const path = require("path");
-const { exec } = require("child_process");
+const express = require('express');
+const multer = require('multer');
+const packger = require('./packger');
 
 const app = express();
+const upload = multer({ dest: 'uploads/' });
+
 app.use(express.json());
 
-const upload = multer({ dest: "uploads/" });
-
 app.get("/", (req, res) => {
-  res.send("Android Build Server is running!");
+    res.send("Android Build Server is running!");
 });
 
-// 这里先放一个测试路由
-app.post("/build-test", upload.single("file"), (req, res) => {
-  res.json({ message: "File received", file: req.file });
+app.post("/config/update", (req, res) => {
+    const { appName, packageName, adjustToken, adjustEvents } = req.body;
+
+    if (appName) packger.updateAppName(appName);
+    if (packageName) packger.updatePackageName(packageName);
+    if (adjustToken) packger.updateAdjust(adjustToken, adjustEvents || {});
+
+    res.send({ success: true });
 });
 
-// 端口必须用 process.env.PORT (Render 会自动传入)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server started on port " + PORT));
+app.post("/upload/icon", upload.single("file"), (req, res) => {
+    const fs = require('fs');
+    const config = require('./config');
+
+    fs.copyFileSync(req.file.path, config.paths.appIcon);
+    res.send({ success: true });
+});
+
+app.post("/upload/google", upload.single("file"), (req, res) => {
+    const fs = require('fs');
+    const config = require('./config');
+
+    fs.copyFileSync(req.file.path, config.paths.googleJson);
+    res.send({ success: true });
+});
+
+app.post("/build", async (req, res) => {
+    packger.buildAPK((result) => {
+        if (!result) return res.send({ success: false });
+        res.send({
+            success: true,
+            apk: result
+        });
+    });
+});
+
+app.listen(3000, () => console.log("Build server running on port 3000"));
