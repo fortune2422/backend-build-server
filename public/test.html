@@ -5,33 +5,50 @@
 <title>Android Build Server Tester</title>
 <style>
     body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
-    input, button { margin: 8px 0; width: 100%; padding: 8px; }
+    input, button { margin: 8px 0; width: 100%; padding: 10px; }
+    h3, h4 { margin-top: 25px; }
 </style>
 </head>
 <body>
 <h2>Android Build Server Tester</h2>
 
-<h3>1. 更新配置</h3>
+<!-- 1. 更新配置 -->
+<h3>1. 更新配置 (App 信息)</h3>
+
 <input id="appName" placeholder="App Name">
 <input id="packageName" placeholder="Package Name (applicationId)">
-<input id="versionCode" placeholder="Version Code">
-<input id="versionName" placeholder="Version Name">
+<input id="versionCode" placeholder="Version Code (可随便填)">
+<input id="versionName" placeholder="Version Name (可随便填)">
 <input id="adjustToken" placeholder="Adjust App Token">
+
+<h3>Adjust 事件 Token（你的 JSInterface 里的全部事件）</h3>
+
+<input id="tokenLogin" placeholder="TOKEN_LOGIN">
+<input id="tokenLogout" placeholder="TOKEN_LOGOUT">
+<input id="tokenRegisterClick" placeholder="TOKEN_REGISTER_CLICK">
+<input id="tokenRegister" placeholder="TOKEN_REGISTER">
+<input id="tokenRechargeClick" placeholder="TOKEN_RECHARGE_CLICK">
+<input id="tokenRecharge" placeholder="TOKEN_RECHARGE">
+<input id="tokenFirstRecharge" placeholder="TOKEN_FIRST_RECHARGE">
+<input id="tokenEnterGame" placeholder="TOKEN_ENTER_GAME">
 
 <button onclick="updateConfig()">Update Config</button>
 
 <hr>
 
-<h3>2. 上传 icon</h3>
+<!-- 2. 上传 icon -->
+<h3>2. 上传 App Icon</h3>
 <input type="file" id="iconFile">
 <button onclick="uploadIcon()">Upload Icon</button>
 
+<!-- 3. 上传 google-services.json -->
 <h3>3. 上传 google-services.json</h3>
 <input type="file" id="googleFile">
 <button onclick="uploadGoogle()">Upload Google Services</button>
 
 <hr>
 
+<!-- 4. Build -->
 <h3>4. Build APK</h3>
 <button onclick="buildApk()">Start Build</button>
 
@@ -45,9 +62,22 @@ function updateConfig() {
             packageName: document.getElementById('packageName').value,
             versionCode: document.getElementById('versionCode').value,
             versionName: document.getElementById('versionName').value,
-            adjustToken: document.getElementById('adjustToken').value
+            adjustToken: document.getElementById('adjustToken').value,
+
+            eventTokens: {
+                TOKEN_LOGIN: document.getElementById('tokenLogin').value,
+                TOKEN_LOGOUT: document.getElementById('tokenLogout').value,
+                TOKEN_REGISTER_CLICK: document.getElementById('tokenRegisterClick').value,
+                TOKEN_REGISTER: document.getElementById('tokenRegister').value,
+                TOKEN_RECHARGE_CLICK: document.getElementById('tokenRechargeClick').value,
+                TOKEN_RECHARGE: document.getElementById('tokenRecharge').value,
+                TOKEN_FIRST_RECHARGE: document.getElementById('tokenFirstRecharge').value,
+                TOKEN_ENTER_GAME: document.getElementById('tokenEnterGame').value
+            }
         })
-    }).then(r => r.text()).then(alert);
+    })
+    .then(r => r.text())
+    .then(alert);
 }
 
 function uploadIcon() {
@@ -67,8 +97,9 @@ function uploadGoogle() {
 function buildApk() {
     fetch('/build', { method: 'POST' })
         .then(r => r.json())
-        .then(data => alert('Build started or result: ' + JSON.stringify(data)));
+        .then(data => alert('Build result: ' + JSON.stringify(data)));
 }
 </script>
+
 </body>
 </html>
