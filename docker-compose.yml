@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  build-server:
+    build: .
+    container_name: backend-build-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./template:/app/template
+      - ./uploads:/app/uploads
+      - ./temp:/app/temp
+      - /path/on/host/keystore:/keystore:ro   # <-- 把你的 keystore 放在宿主机路径
+    environment:
+      - KEYSTORE_PATH=/keystore/keystore.jks
+      - KEYSTORE_PASS=your_keystore_password
+      - KEY_ALIAS=your_alias
