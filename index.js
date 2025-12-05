@@ -64,7 +64,7 @@ async function startBuild(cfg) {
 app.post('/api/build', async (req, res) => {
   try {
     const cfg = req.body;
-    const jobId = await startBuild(cfg);
+    const jobId = await triggerBuild(cfg);
     res.json({ status: 'queued', jobId });
   } catch (e) {
     console.error(e);
