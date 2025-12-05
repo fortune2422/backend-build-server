@@ -11,6 +11,7 @@ import android.webkit.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.adjust.sdk.Adjust;
 import com.adjust.sdk.AdjustConfig;
+import com.adjust.sdk.AdjustEvent;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
         Adjust.onPause();
     }
 
-    // 固定字体
     @Override
     public void applyOverrideConfiguration(Configuration overrideConfiguration) {
         if (overrideConfiguration != null) {
@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
         super.applyOverrideConfiguration(overrideConfiguration);
     }
 
-    // 固定显示密度
     @Override
     protected void attachBaseContext(Context newBase) {
         Configuration config = newBase.getResources().getConfiguration();
@@ -50,12 +49,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(b);
         setContentView(R.layout.activity_main);
 
-        // ★★ 动态 Adjust Token ★★
+        // ★★ 动态获取 Adjust Token & Event Token ★★
+        String adjustToken = getString(R.string.backend_adjust_token);
         String eventToken = getString(R.string.backend_event_token);
-        AdjustEvent event = new AdjustEvent(eventToken);
-        Adjust.trackEvent(event);
-        AdjustConfig config = new AdjustConfig(getApplicationContext(), adjustToken, AdjustConfig.ENVIRONMENT_PRODUCTION);
+
+        // ★★ 初始化 Adjust ★★
+        AdjustConfig config = new AdjustConfig(
+                getApplicationContext(),
+                adjustToken,
+                AdjustConfig.ENVIRONMENT_PRODUCTION
+        );
         Adjust.onCreate(config);
+
+        // ★★ 上报事件（可选）★★
+        if (!eventToken.equals("DEFAULT_EVENT_TOKEN")) {
+            AdjustEvent event = new AdjustEvent(eventToken);
+            Adjust.trackEvent(event);
+        }
 
         final WebView w = findViewById(R.id.webview);
 
@@ -70,23 +80,19 @@ public class MainActivity extends AppCompatActivity {
         JsInterface jsInterface = new JsInterface(this);
         w.addJavascriptInterface(jsInterface, "jsBridge");
 
-        // WebViewClient：内部链接在 WebView 打开，外链使用外部 Intent
         w.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                return handleUrl(view, url);
+                return handleUrl(request.getUrl().toString());
             }
 
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String urlRaw) {
-                if (urlRaw == null) return false;
-                return handleUrl(view, urlRaw);
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleUrl(url);
             }
 
-            private boolean handleUrl(WebView view, String urlRaw) {
-                if (urlRaw == null) return false;
-                String url = urlRaw.trim();
+            private boolean handleUrl(String url) {
+                if (url == null) return false;
 
                 if (url.contains("3go606.com") || url.contains("go606.com") || url.contains("1go606.com")) {
                     return false;
@@ -97,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // WebChromeClient：处理 target="_blank"
         w.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog,
@@ -112,18 +117,9 @@ public class MainActivity extends AppCompatActivity {
                 ns.setSupportMultipleWindows(true);
                 ns.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
-                newWebView.setWebViewClient(new WebViewClient() {
-                    @Override
-                    public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                        return handleNewWebViewUrl(request.getUrl().toString());
-                    }
-
+                newWebView.setWebViewClient(new WebViewClient(){
                     @Override
                     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                        return handleNewWebViewUrl(url);
-                    }
-
-                    private boolean handleNewWebViewUrl(String url) {
                         if (url == null) return false;
 
                         if (url.matches(".*\\.(png|jpg|jpeg)(\\?.*)?$")) {
@@ -141,8 +137,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                newWebView.setWebChromeClient(new WebChromeClient());
-
                 WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
                 transport.setWebView(newWebView);
                 resultMsg.sendToTarget();
@@ -150,33 +144,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // ★★ 动态加载 H5 URL ★★
+        // ★★ 动态加载 H5 链接 ★★
         String url = getString(R.string.backend_web_url);
-w.loadUrl(url);
+        w.loadUrl(url);
     }
 
-    // 外部跳转（APP 优先）
     private void openExternal(String url) {
-
-        if (url == null || url.isEmpty()) return;
+        if (url == null) return;
 
         String appUrl = buildAppLink(url);
 
         try {
-            Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(appUrl));
-            appIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(appIntent);
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(appUrl)));
             return;
         } catch (Exception ignored) {}
 
         try {
-            Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            webIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(webIntent);
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
         } catch (Exception ignored) {}
     }
 
-    // 转换 APP Scheme
     private String buildAppLink(String url) {
 
         if (url == null) return url;
@@ -193,10 +180,6 @@ w.loadUrl(url);
         if (url.contains("instagram.com/")) {
             String user = url.substring(url.indexOf(".com/") + 5).split("[/?]")[0];
             return "instagram://user?username=" + user;
-        }
-
-        if (url.contains("whatsapp.com/channel/")) {
-            return url;
         }
 
         if (url.contains("x.com/") || url.contains("twitter.com/")) {
