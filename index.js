@@ -48,9 +48,13 @@ app.post('/api/upload/firebase', upload.single('firebase'), (req, res) => {
 // -----------------------------
 app.post('/api/upload/icon', upload.single('icon'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
+
   const rel = path.relative(__dirname, req.file.path);
-  res.json({ status: 'ok', path: rel });
+  const url = `${process.env.PUBLIC_URL}/${rel}`;
+
+  res.json({ status: 'ok', path: rel, url });
 });
+
 
 
 // -----------------------------
