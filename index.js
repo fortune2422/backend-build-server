@@ -32,45 +32,50 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Upload firebase json
+
+// -----------------------------
+// 🔥 Upload Firebase JSON
+// -----------------------------
 app.post('/api/upload/firebase', upload.single('firebase'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
   const rel = path.relative(__dirname, req.file.path);
   res.json({ status: 'ok', path: rel });
 });
 
-// Upload icon
+
+// -----------------------------
+// 🔥 Upload icon
+// -----------------------------
 app.post('/api/upload/icon', upload.single('icon'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
   const rel = path.relative(__dirname, req.file.path);
   res.json({ status: 'ok', path: rel });
 });
 
-// Start build
+
+// -----------------------------
+// 🔥 Build Trigger
+// -----------------------------
+async function startBuild(cfg) {
+  // cfg 包含 appName, packageName, iconPath 等所有字段
+  return await triggerBuild(cfg);
+}
+
 app.post('/api/build', async (req, res) => {
-  /*
-    body expected:
-    {
-      "appName":"My App",
-      "webUrl":"https://example.com",
-      "packageName":"com.example.app",
-      "adjustToken":"abc",
-      "eventToken":"evt",
-      "firebasePath":"uploads/firebase/xxx.json", // relative path returned above
-      "iconPath":"uploads/icons/xxx.png" // relative path returned above
-    }
-  */
   try {
     const cfg = req.body;
     const jobId = await startBuild(cfg);
     res.json({ status: 'queued', jobId });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ status: 'error', message: e.message || e.toString() });
+    res.status(500).json({ status: 'error', message: e.message });
   }
 });
 
-// Query status
+
+// -----------------------------
+// 🔥 Build status
+// -----------------------------
 app.get('/api/status/:jobId', (req, res) => {
   const jobId = req.params.jobId;
   const st = getJobStatus(jobId);
@@ -78,7 +83,10 @@ app.get('/api/status/:jobId', (req, res) => {
   res.json(st);
 });
 
-// Serve output files
+
+// -----------------------------
+// 🔥 Serve APK downloads
+// -----------------------------
 app.use('/downloads', express.static(OUTPUT_DIR));
 
 const PORT = process.env.PORT || 3000;
