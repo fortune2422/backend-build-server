@@ -51,7 +51,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // ★★ 动态 Adjust Token ★★
-        String adjustToken = getString(R.string.backend_adjust_token);
+        String eventToken = getString(R.string.backend_event_token);
+        AdjustEvent event = new AdjustEvent(eventToken);
+        Adjust.trackEvent(event);
         AdjustConfig config = new AdjustConfig(getApplicationContext(), adjustToken, AdjustConfig.ENVIRONMENT_PRODUCTION);
         Adjust.onCreate(config);
 
