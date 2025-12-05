@@ -1,0 +1,7 @@
+{
+  "appName": "DEFAULT_APP_NAME",
+  "packageName": "com.default.app",
+  "webUrl": "https://default.com",
+  "adjustToken": "DEFAULT_ADJUST_TOKEN",
+  "eventToken": "DEFAULT_EVENT_TOKEN"
+}
