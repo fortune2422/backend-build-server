@@ -18,7 +18,13 @@ const OUTPUT_DIR = path.join(UPLOADS, 'output');
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
-// multer storage
+// serve uploads publicly
+app.use('/uploads', express.static(UPLOADS));
+
+// serve apk output
+app.use('/downloads', express.static(OUTPUT_DIR));
+
+// multer config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     if (file.fieldname === 'firebase') cb(null, FIREBASE_DIR);
@@ -30,45 +36,35 @@ const storage = multer.diskStorage({
     cb(null, id + path.extname(file.originalname));
   }
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-
-// -----------------------------
-// 🔥 Upload Firebase JSON
-// -----------------------------
+// upload firebase
 app.post('/api/upload/firebase', upload.single('firebase'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
-  const rel = path.relative(__dirname, req.file.path);
+
+  const rel = `uploads/firebase/${req.file.filename}`;
   res.json({ status: 'ok', path: rel });
 });
 
-
-// -----------------------------
-// 🔥 Upload icon
-// -----------------------------
+// upload icon
 app.post('/api/upload/icon', upload.single('icon'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' });
 
-  const rel = path.relative(__dirname, req.file.path);
-  const url = `${process.env.PUBLIC_URL}/${rel}`;
+  const rel = `uploads/icons/${req.file.filename}`;
+  const url = `${req.protocol}://${req.get('host')}/${rel}`;
 
   res.json({ status: 'ok', path: rel, url });
 });
 
-
-
-// -----------------------------
-// 🔥 Build Trigger
-// -----------------------------
+// start build
 async function startBuild(cfg) {
-  // cfg 包含 appName, packageName, iconPath 等所有字段
   return await triggerBuild(cfg);
 }
 
 app.post('/api/build', async (req, res) => {
   try {
     const cfg = req.body;
-    const jobId = await triggerBuild(cfg);
+    const jobId = await startBuild(cfg);
     res.json({ status: 'queued', jobId });
   } catch (e) {
     console.error(e);
@@ -76,22 +72,13 @@ app.post('/api/build', async (req, res) => {
   }
 });
 
-
-// -----------------------------
-// 🔥 Build status
-// -----------------------------
+// query build status
 app.get('/api/status/:jobId', (req, res) => {
   const jobId = req.params.jobId;
   const st = getJobStatus(jobId);
   if (!st) return res.status(404).json({ error: 'not found' });
   res.json(st);
 });
-
-
-// -----------------------------
-// 🔥 Serve APK downloads
-// -----------------------------
-app.use('/downloads', express.static(OUTPUT_DIR));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
