@@ -18,6 +18,12 @@ on:
       eventToken:
         description: "Adjust Event Token"
         required: true
+      firebasePath:
+        description: "Firebase JSON Download URL"
+        required: false
+      iconPath:
+        description: "ICON PNG Download URL"
+        required: false
 
 jobs:
   build:
@@ -26,6 +32,20 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Download Firebase JSON if provided
+        if: ${{ github.event.inputs.firebasePath != '' }}
+        run: |
+          mkdir -p app/google-services
+          curl -L "${{ github.event.inputs.firebasePath }}" -o app/google-services/google-services.json
+          echo "Firebase JSON downloaded."
+
+      - name: Replace Launcher Icon if provided
+        if: ${{ github.event.inputs.iconPath != '' }}
+        run: |
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
+          curl -L "${{ github.event.inputs.iconPath }}" -o app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          echo "Launcher icon replaced."
 
       - name: Set up JDK
         uses: actions/setup-java@v3
