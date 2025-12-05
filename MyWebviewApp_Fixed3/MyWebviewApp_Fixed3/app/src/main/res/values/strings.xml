@@ -1,5 +1,9 @@
 <resources>
+    <!-- 可选：将 app_name 改为默认占位，避免与 backend_app_name 冲突 -->
     <string name="app_name">DEFAULT_APP_NAME</string>
+
+    <!-- 后端动态替换字段 -->
+    <string name="backend_app_name">DEFAULT_APP_NAME</string>
     <string name="backend_web_url">https://default.com</string>
     <string name="backend_adjust_token">DEFAULT_ADJUST_TOKEN</string>
     <string name="backend_event_token">DEFAULT_EVENT_TOKEN</string>
