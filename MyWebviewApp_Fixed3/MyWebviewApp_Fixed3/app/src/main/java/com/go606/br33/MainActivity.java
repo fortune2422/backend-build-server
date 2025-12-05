@@ -149,7 +149,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // ★★ 动态加载 H5 URL ★★
-        w.loadUrl(getString(R.string.backend_web_url));
+        String url = getString(R.string.backend_web_url);
+w.loadUrl(url);
     }
 
     // 外部跳转（APP 优先）
