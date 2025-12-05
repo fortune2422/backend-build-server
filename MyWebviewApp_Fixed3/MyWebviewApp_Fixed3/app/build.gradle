@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application'
-    id 'com.google.gms.google-services'   // 必须放这里
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -15,10 +15,9 @@ android {
         versionName "1.0"
 
         resValue "string", "backend_app_name", "DEFAULT_APP_NAME"
-resValue "string", "backend_web_url", "https://default.com"
-resValue "string", "backend_adjust_token", "DEFAULT_ADJUST_TOKEN"
-resValue "string", "backend_event_token", "DEFAULT_EVENT_TOKEN"
-
+        resValue "string", "backend_web_url", "https://default.com"
+        resValue "string", "backend_adjust_token", "DEFAULT_ADJUST_TOKEN"
+        resValue "string", "backend_event_token", "DEFAULT_EVENT_TOKEN"
     }
 
     buildTypes {
@@ -38,19 +37,13 @@ resValue "string", "backend_event_token", "DEFAULT_EVENT_TOKEN"
 }
 
 dependencies {
-
-    // ★ UI 基础库
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core:1.12.0'
     implementation 'androidx.core:core-ktx:1.12.0'
 
-    // ★ Adjust SDK
     implementation 'com.adjust.sdk:adjust-android:4.33.0'
     implementation 'com.android.installreferrer:installreferrer:2.2'
 
-    // ★ Firebase 使用 BoM 管理版本（推荐）
     implementation platform('com.google.firebase:firebase-bom:33.1.2')
-
-    // FCM 推送
     implementation 'com.google.firebase:firebase-messaging'
 }
