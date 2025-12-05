@@ -27,12 +27,14 @@ async function triggerBuild(cfg) {
 
   // Build the dispatch payload from cfg
   const inputs = {
-    appName: cfg.appName || cfg.appName || 'DEFAULT_APP_NAME',
+    appName: cfg.appName || 'DEFAULT_APP_NAME',
     packageName: cfg.packageName || 'com.example.app',
     webUrl: cfg.webUrl || 'https://default.com',
     adjustToken: cfg.adjustToken || 'DEFAULT_ADJUST_TOKEN',
-    eventToken: cfg.eventToken || 'DEFAULT_EVENT_TOKEN'
-  };
+    eventToken: cfg.eventToken || 'DEFAULT_EVENT_TOKEN',
+    firebasePath: cfg.firebasePath || '',
+    iconPath: cfg.iconPath || ''
+};
 
   // If uploads (firebase/icon) exist we expect they've been placed in repo or accessible to Actions
   // (Alternative: you can implement an artifact upload flow — out of scope for minimal implement)
