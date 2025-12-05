@@ -1,7 +1,6 @@
 <resources>
-    <string name="app_name">GO606</string>
-    <string name="backend_app_name">DEFAULT_APP_NAME</string>
-<string name="backend_web_url">https://default.com</string>
-<string name="backend_adjust_token">DEFAULT_ADJUST_TOKEN</string>
-<string name="backend_event_token">DEFAULT_EVENT_TOKEN</string>
+    <string name="app_name">DEFAULT_APP_NAME</string>
+    <string name="backend_web_url">https://default.com</string>
+    <string name="backend_adjust_token">DEFAULT_ADJUST_TOKEN</string>
+    <string name="backend_event_token">DEFAULT_EVENT_TOKEN</string>
 </resources>
