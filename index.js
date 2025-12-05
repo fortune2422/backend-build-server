@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const multer  = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { startBuild, getJobStatus } = require('./services/builder');
+const { triggerBuild, getJobStatus } = require('./services/ghaBuilder');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
