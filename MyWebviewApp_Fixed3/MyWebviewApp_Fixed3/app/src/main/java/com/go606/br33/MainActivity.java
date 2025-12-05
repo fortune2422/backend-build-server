@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // 最后加载 H5
-        w.loadUrl("https://4go606.com?ch=zdcal&sdmode=3");
+        w.loadUrl(getString(R.string.backend_web_url))
     }
 
 
