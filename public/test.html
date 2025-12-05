@@ -12,16 +12,19 @@
 <body>
 <h2>Android Build Server Tester</h2>
 
-<!-- 1. 更新配置 -->
-<h3>1. 更新配置 (App 信息)</h3>
+<!-- 1. App 基本配置 -->
+<h3>1. 更新配置 (App 基本信息)</h3>
 
 <input id="appName" placeholder="App Name">
 <input id="packageName" placeholder="Package Name (applicationId)">
-<input id="versionCode" placeholder="Version Code (可随便填)">
-<input id="versionName" placeholder="Version Name (可随便填)">
+<input id="versionCode" placeholder="Version Code (随便填)">
+<input id="versionName" placeholder="Version Name (随便填)">
 <input id="adjustToken" placeholder="Adjust App Token">
 
-<h3>Adjust 事件 Token（你的 JSInterface 里的全部事件）</h3>
+<h3>H5 链接</h3>
+<input id="h5Url" placeholder="H5 URL（WebView 要加载的链接）">
+
+<h3>Adjust 事件 Token（来自 JSInterface.java）</h3>
 
 <input id="tokenLogin" placeholder="TOKEN_LOGIN">
 <input id="tokenLogout" placeholder="TOKEN_LOGOUT">
@@ -63,6 +66,7 @@ function updateConfig() {
             versionCode: document.getElementById('versionCode').value,
             versionName: document.getElementById('versionName').value,
             adjustToken: document.getElementById('adjustToken').value,
+            h5Url: document.getElementById('h5Url').value,
 
             eventTokens: {
                 TOKEN_LOGIN: document.getElementById('tokenLogin').value,
