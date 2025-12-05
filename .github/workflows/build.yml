@@ -1,0 +1,55 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      appName:
+        description: "APP Name"
+        required: true
+      packageName:
+        description: "Package Name"
+        required: true
+      webUrl:
+        description: "H5 URL"
+        required: true
+      adjustToken:
+        description: "Adjust Token"
+        required: true
+      eventToken:
+        description: "Adjust Event Token"
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Update Android Strings
+        run: |
+          sed -i "s|DEFAULT_APP_NAME|${{ github.event.inputs.appName }}|g" app/src/main/res/values/strings.xml
+          sed -i "s|https://default.com|${{ github.event.inputs.webUrl }}|g" app/src/main/res/values/strings.xml
+          sed -i "s|DEFAULT_ADJUST_TOKEN|${{ github.event.inputs.adjustToken }}|g" app/src/main/res/values/strings.xml
+          sed -i "s|DEFAULT_EVENT_TOKEN|${{ github.event.inputs.eventToken }}|g" app/src/main/res/values/strings.xml
+
+      - name: Update Package Name
+        run: |
+          sed -i "s|com.example.app|${{ github.event.inputs.packageName }}|g" app/src/main/AndroidManifest.xml
+          sed -i "s|com.example.app|${{ github.event.inputs.packageName }}|g" app/build.gradle
+
+      - name: Build APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/*.apk
