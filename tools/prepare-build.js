@@ -1,5 +1,5 @@
 /**
- * prepare-build.js
+ * prepare-build.js (final version for your project)
  * 自动根据 buildConfig.json 修改 Android 工程
  */
 
@@ -34,112 +34,82 @@ function main() {
     const {
         appName,
         packageName,
-        h5Url,
-        appIconBase64,
-        firebaseJsonBase64,
+        webUrl,
         adjustToken,
-        adjustEvents
+        adjustEvents,
+        appIconBase64,
+        firebaseJsonBase64
     } = config;
 
-    console.log("🚀 开始处理 Android 构建配置…");
-    console.log("📄 读取 buildConfig.json 成功");
+    console.log("🚀 prepare-build.js 开始运行");
     console.log(config);
 
-    // ===============================
+    // =========================================
     // 1. 修改 APP 名称（strings.xml）
-    // ===============================
+    // =========================================
     const stringsXml = `${PROJECT_ROOT}/app/src/main/res/values/strings.xml`;
 
     replaceInFile(
         stringsXml,
-        `<string name="app_name">.*</string>`,
-        `<string name="app_name">${appName}</string>`
+        `<string name="backend_app_name">.*</string>`,
+        `<string name="backend_app_name">${appName}</string>`
     );
-
-    console.log("✔ 已更新 app 名称");
-
-    // ===============================
-    // 2. 修改包名（移动文件夹 + Gradle）
-    // ===============================
-    if (packageName) {
-        console.log("📦 开始修改包名…");
-
-        const oldPackagePath = `${PROJECT_ROOT}/app/src/main/java/com/go606/br33`;
-        const newPackagePath = `${PROJECT_ROOT}/app/src/main/java/${packageName.replace(/\./g, "/")}`;
-
-        ensureDir(newPackagePath);
-
-        // 移动 Java 文件
-        fs.readdirSync(oldPackagePath).forEach(file => {
-            fs.renameSync(
-                path.join(oldPackagePath, file),
-                path.join(newPackagePath, file)
-            );
-        });
-
-        console.log(`✔ 已移动 Java 文件至新包路径：${newPackagePath}`);
-
-        const buildGradle = `${PROJECT_ROOT}/app/build.gradle`;
-        replaceInFile(buildGradle, `applicationId ".*"`, `applicationId "${packageName}"`);
-
-        console.log("✔ 已更新 applicationId");
-    }
-
-    // ===============================
-    // 3. H5 链接注入（MainActivity.java）
-    // ===============================
-    const mainActivity = `${PROJECT_ROOT}/app/src/main/java/${packageName.replace(/\./g, "/")}/MainActivity.java`;
-    replaceInFile(
-        mainActivity,
-        `String BASE_URL = ".*";`,
-        `String BASE_URL = "${h5Url}";`
-    );
-
-    console.log("✔ 已注入 H5 URL");
-
-    // ===============================
-    // 4. 写入 Adjust Token（MyApp.java）
-    // ===============================
-    const myAppFile = `${PROJECT_ROOT}/app/src/main/java/${packageName.replace(/\./g, "/")}/MyApp.java`;
 
     replaceInFile(
-        myAppFile,
-        `String ADJUST_TOKEN = ".*";`,
-        `String ADJUST_TOKEN = "${adjustToken}";`
+        stringsXml,
+        `<string name="backend_web_url">.*</string>`,
+        `<string name="backend_web_url">${webUrl}</string>`
     );
 
-    console.log("✔ 已注入 Adjust 主 Token");
+    replaceInFile(
+        stringsXml,
+        `<string name="backend_adjust_token">.*</string>`,
+        `<string name="backend_adjust_token">${adjustToken}</string>`
+    );
 
-    // ===============================
-    // 5. 写入 Adjust 事件 Token（JsInterface.java）
-    // ===============================
+    console.log("✔ strings.xml 修改完毕");
+
+    // =========================================
+    // 2. 替换 MyApp.java 的 Adjust Token
+    // =========================================
+    const myAppPath = `${PROJECT_ROOT}/app/src/main/java/${packageName.replace(/\./g, "/")}/MyApp.java`;
+
+    replaceInFile(
+        myAppPath,
+        `String appToken = ".*";`,
+        `String appToken = "${adjustToken}";`
+    );
+
+    console.log("✔ 已更新 MyApp.java Adjust Token");
+
+    // =========================================
+    // 3. 替换 JsInterface.java Adjust Event Tokens
+    // =========================================
     const jsInterface = `${PROJECT_ROOT}/app/src/main/java/${packageName.replace(/\./g, "/")}/JsInterface.java`;
 
     Object.keys(adjustEvents).forEach(eventKey => {
         replaceInFile(
             jsInterface,
-            `${eventKey} = ".*";`,
+            `${eventKey}\\s*=\\s*".*";`,
             `${eventKey} = "${adjustEvents[eventKey]}";`
         );
     });
 
-    console.log("✔ 已写入 Adjust 事件 Tokens");
+    console.log("✔ 已更新 JsInterface.java Adjust Event Tokens");
 
-    // ===============================
-    // 6. 写入 google-services.json
-    // ===============================
+    // =========================================
+    // 4. 写入 google-services.json
+    // =========================================
     if (firebaseJsonBase64) {
         const firebasePath = `${PROJECT_ROOT}/app/google-services.json`;
         fs.writeFileSync(firebasePath, Buffer.from(firebaseJsonBase64, "base64"));
-        console.log("✔ google-services.json 已写入");
+        console.log("✔ google-services.json 写入完毕");
     }
 
-    // ===============================
-    // 7. 替换 App 图标（覆盖所有 mipmap）
-    // ===============================
+    // =========================================
+    // 5. 替换 APP 图标
+    // =========================================
     if (appIconBase64) {
-        console.log("🎨 开始替换 APP 图标…");
-
         const iconBuffer = Buffer.from(appIconBase64, "base64");
 
         const mipmapFolders = [
@@ -151,16 +121,16 @@ function main() {
         ];
 
         mipmapFolders.forEach(folder => {
-            const dest = `${PROJECT_ROOT}/app/src/main/res/${folder}/ic_launcher.png`;
-            if (fs.existsSync(dest)) {
-                fs.writeFileSync(dest, iconBuffer);
+            const iconPath = `${PROJECT_ROOT}/app/src/main/res/${folder}/ic_launcher.png`;
+            if (fs.existsSync(iconPath)) {
+                fs.writeFileSync(iconPath, iconBuffer);
             }
         });
 
-        console.log("✔ 图标替换完成");
+        console.log("✔ APP 图标替换完毕");
     }
 
-    console.log("🎉 Android 工程预处理完成！");
+    console.log("🎉 prepare-build.js 完成全部处理！");
 }
 
 main();
