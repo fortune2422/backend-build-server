@@ -4,77 +4,82 @@ on:
   workflow_dispatch:
     inputs:
       appName:
-        description: "APP Name"
         required: true
       packageName:
-        description: "Package Name"
         required: true
       webUrl:
-        description: "H5 URL"
         required: true
       adjustToken:
-        description: "Adjust Token"
         required: true
       eventToken:
-        description: "Adjust Event Token"
         required: true
       firebasePath:
-        description: "Firebase JSON Download URL"
         required: false
+        default: ""
       iconPath:
-        description: "ICON PNG Download URL"
         required: false
+        default: ""
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PROJECT_DIR: MyWebviewApp_Fixed3/MyWebviewApp_Fixed3/app
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Ensure Gradle wrapper is executable
-        run: chmod +x ./gradlew
+      - name: Ensure gradle wrapper executable
+        run: chmod +x ${PROJECT_DIR}/gradlew
 
       - name: Download Firebase JSON (if provided)
         if: ${{ github.event.inputs.firebasePath != '' }}
         run: |
-          mkdir -p app/google-services
-          curl -L "${{ github.event.inputs.firebasePath }}" -o app/google-services/google-services.json
-          echo "Firebase JSON downloaded."
+          mkdir -p ${PROJECT_DIR}
+          curl -L "${{ github.event.inputs.firebasePath }}" -o ${PROJECT_DIR}/google-services.json
+          echo "Firebase JSON downloaded to ${PROJECT_DIR}/google-services.json"
 
-      - name: Replace App Icon (all densities)
+      - name: Replace App Icon (all densities) (if provided)
         if: ${{ github.event.inputs.iconPath != '' }}
         run: |
           for size in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
-            mkdir -p app/src/main/res/$size
-            curl -L "${{ github.event.inputs.iconPath }}" -o app/src/main/res/$size/ic_launcher.png
+            mkdir -p ${PROJECT_DIR}/src/main/res/$size
+            curl -L "${{ github.event.inputs.iconPath }}" -o ${PROJECT_DIR}/src/main/res/$size/ic_launcher.png
           done
           echo "App icons replaced."
 
+      - name: Update Strings (backend fields)
+        run: |
+          # replace backend placeholders in strings.xml
+          STRINGS=${PROJECT_DIR}/src/main/res/values/strings.xml
+          sed -i "s|DEFAULT_APP_NAME|${{ github.event.inputs.appName }}|g" "$STRINGS"
+          sed -i "s|https://default.com|${{ github.event.inputs.webUrl }}|g" "$STRINGS"
+          sed -i "s|DEFAULT_ADJUST_TOKEN|${{ github.event.inputs.adjustToken }}|g" "$STRINGS"
+          sed -i "s|DEFAULT_EVENT_TOKEN|${{ github.event.inputs.eventToken }}|g" "$STRINGS"
+
+      - name: Update applicationId in build.gradle
+        run: |
+          BUILD_FILE=${PROJECT_DIR}/build.gradle
+          # Replace the applicationId value (handles both double quotes and single)
+          sed -i "s|applicationId \".*\"|applicationId \"${{ github.event.inputs.packageName }}\"|g" "$BUILD_FILE"
+          # Also optionally replace namespace if you want (be careful)
+          sed -i "s|namespace '.*'|namespace '${{ github.event.inputs.packageName }}'|g" "$BUILD_FILE" || true
+
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
-          java-version: "17"
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Update App Strings
+      - name: Build Release APK
+        working-directory: ${PROJECT_DIR}
         run: |
-          sed -i "s|DEFAULT_APP_NAME|${{ github.event.inputs.appName }}|g" app/src/main/res/values/strings.xml
-          sed -i "s|https://default.com|${{ github.event.inputs.webUrl }}|g" app/src/main/res/values/strings.xml
-          sed -i "s|DEFAULT_ADJUST_TOKEN|${{ github.event.inputs.adjustToken }}|g" app/src/main/res/values/strings.xml
-          sed -i "s|DEFAULT_EVENT_TOKEN|${{ github.event.inputs.eventToken }}|g" app/src/main/res/values/strings.xml
-
-      - name: Update Package Name
-        run: |
-          sed -i "s|com.example.app|${{ github.event.inputs.packageName }}|g" app/src/main/AndroidManifest.xml
-          sed -i "s|com.example.app|${{ github.event.inputs.packageName }}|g" app/build.gradle
-
-      - name: Build APK
-        run: ./gradlew assembleRelease
+          chmod +x ./gradlew
+          ./gradlew clean assembleRelease -x lint --no-daemon
 
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/*.apk
+          path: ${PROJECT_DIR}/app/build/outputs/apk/release/*.apk
