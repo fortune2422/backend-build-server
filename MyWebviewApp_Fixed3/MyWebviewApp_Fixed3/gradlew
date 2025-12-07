@@ -1,6 +1,41 @@
 #!/usr/bin/env sh
-if [ -x "./gradlew" ] ; then
-  exec "./gradlew" "$@"
+
+##############################################################################
+##
+##  Gradle start up script for UN*X
+##
+##############################################################################
+
+# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+DEFAULT_JVM_OPTS=""
+
+APP_NAME="Gradle"
+APP_BASE_NAME=`basename "$0"`
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/bin/java" ] ; then
+        JAVACMD="$JAVA_HOME/bin/java"
+    else
+        JAVACMD="$JAVA_HOME/sh/java"
+    fi
+    if [ ! -x "$JAVACMD" ] ; then
+        echo "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME" >&2
+        exit 1
+    fi
+else
+    JAVACMD="java"
+    which java >/dev/null 2>&1 || { echo "ERROR: JAVA_HOME is not set and no java command could be found in your PATH." >&2 ; exit 1 ; }
 fi
-echo "Gradle wrapper not found. Please open project in Android Studio and let it generate the wrapper, or install Gradle 8.5+ locally."
-gradle "$@"
+
+CLASSPATH=`dirname "$0"`/gradle/wrapper/gradle-wrapper.jar
+
+# Collect all arguments for the java command;
+# Working around quoting problems incurred by wrapper.jar argument passing.
+# See https://github.com/gradle/gradle/issues/2409 for details
+JAVA_OPTS_ARRAY=()
+for arg in "$@"; do
+  JAVA_OPTS_ARRAY+=("$arg")
+done
+
+exec "$JAVACMD" $DEFAULT_JVM_OPTS -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "${JAVA_OPTS_ARRAY[@]}"
