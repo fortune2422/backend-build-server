@@ -23,47 +23,44 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     env:
-      PROJECT_DIR: MyWebviewApp_Fixed3/MyWebviewApp_Fixed3/app
+      PROJECT_ROOT: MyWebviewApp_Fixed3/MyWebviewApp_Fixed3
+      APP_DIR: MyWebviewApp_Fixed3/MyWebviewApp_Fixed3/app
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Ensure gradle wrapper executable
-        run: chmod +x ${PROJECT_DIR}/gradlew
+        run: chmod +x ${PROJECT_ROOT}/gradlew
 
       - name: Download Firebase JSON (if provided)
         if: ${{ github.event.inputs.firebasePath != '' }}
         run: |
-          mkdir -p ${PROJECT_DIR}
-          curl -L "${{ github.event.inputs.firebasePath }}" -o ${PROJECT_DIR}/google-services.json
-          echo "Firebase JSON downloaded to ${PROJECT_DIR}/google-services.json"
+          curl -L "${{ github.event.inputs.firebasePath }}" -o ${APP_DIR}/google-services.json
+          echo "Firebase JSON downloaded."
 
-      - name: Replace App Icon (all densities) (if provided)
+      - name: Replace App Icon (if provided)
         if: ${{ github.event.inputs.iconPath != '' }}
         run: |
           for size in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
-            mkdir -p ${PROJECT_DIR}/src/main/res/$size
-            curl -L "${{ github.event.inputs.iconPath }}" -o ${PROJECT_DIR}/src/main/res/$size/ic_launcher.png
+            curl -L "${{ github.event.inputs.iconPath }}" -o ${APP_DIR}/src/main/res/$size/ic_launcher.png
           done
           echo "App icons replaced."
 
-      - name: Update Strings (backend fields)
+      - name: Update Strings
         run: |
-          # replace backend placeholders in strings.xml
-          STRINGS=${PROJECT_DIR}/src/main/res/values/strings.xml
-          sed -i "s|DEFAULT_APP_NAME|${{ github.event.inputs.appName }}|g" "$STRINGS"
-          sed -i "s|https://default.com|${{ github.event.inputs.webUrl }}|g" "$STRINGS"
-          sed -i "s|DEFAULT_ADJUST_TOKEN|${{ github.event.inputs.adjustToken }}|g" "$STRINGS"
-          sed -i "s|DEFAULT_EVENT_TOKEN|${{ github.event.inputs.eventToken }}|g" "$STRINGS"
+          FILE=${APP_DIR}/src/main/res/values/strings.xml
+          sed -i "s|DEFAULT_APP_NAME|${{ github.event.inputs.appName }}|g" "$FILE"
+          sed -i "s|https://default.com|${{ github.event.inputs.webUrl }}|g" "$FILE"
+          sed -i "s|DEFAULT_ADJUST_TOKEN|${{ github.event.inputs.adjustToken }}|g" "$FILE"
+          sed -i "s|DEFAULT_EVENT_TOKEN|${{ github.event.inputs.eventToken }}|g" "$FILE"
 
       - name: Update applicationId in build.gradle
         run: |
-          BUILD_FILE=${PROJECT_DIR}/build.gradle
-          # Replace the applicationId value (handles both double quotes and single)
+          BUILD_FILE=${APP_DIR}/build.gradle
           sed -i "s|applicationId \".*\"|applicationId \"${{ github.event.inputs.packageName }}\"|g" "$BUILD_FILE"
-          # Also optionally replace namespace if you want (be careful)
           sed -i "s|namespace '.*'|namespace '${{ github.event.inputs.packageName }}'|g" "$BUILD_FILE" || true
 
       - name: Set up JDK
@@ -73,13 +70,12 @@ jobs:
           java-version: '17'
 
       - name: Build Release APK
-        working-directory: ${PROJECT_DIR}
+        working-directory: ${{ env.PROJECT_ROOT }}
         run: |
-          chmod +x ./gradlew
           ./gradlew clean assembleRelease -x lint --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: ${PROJECT_DIR}/app/build/outputs/apk/release/*.apk
+          path: ${{ env.APP_DIR }}/build/outputs/apk/release/*.apk
